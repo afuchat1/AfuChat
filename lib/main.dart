@@ -102,9 +102,7 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
- 
-
-@override
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Padding(
@@ -285,4 +283,250 @@ class SponsoredAdWidget extends StatelessWidget {
         children: [
           Icon(Icons.star, color: Colors.yellow),
           SizedBox(width: 8),
-          Text('Sponsored: Check out this cool product
+          Text('Sponsored: Check out this cool product!'),
+        ],
+      ),
+    );
+  }
+}
+
+class MessagingScreen extends StatefulWidget {
+  const MessagingScreen({super.key});
+
+  @override
+  _MessagingScreenState createState() => _MessagingScreenState();
+}
+
+class _MessagingScreenState extends State<MessagingScreen> {
+  final TextEditingController _messageController = TextEditingController();
+  final List<Map<String, String>> _messages = [];
+  String _aiSuggestion = '';
+  bool _isLoading = false;
+
+  Future<void> _getAISuggestion(String input) async {
+    if (input.isEmpty) {
+      setState(() => _aiSuggestion = '');
+      return;
+    }
+    setState(() => _isLoading = true);
+    try {
+      final response = await http.post(
+        Uri.parse('https://api-inference.huggingface.co/models/distilbert-base-uncased-finetuned-sst-2-english'),
+        headers: {
+          'Authorization': 'Bearer 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',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({'inputs': input}),
+      );
+      if (response.statusCode == 200) {
+        final result = jsonDecode(response.body);
+        setState(() {
+          _aiSuggestion = result[0]['label'] == 'POSITIVE' ? 'Sounds positive!' : 'Sounds negative.';
+        });
+      } else {
+        setState(() => _aiSuggestion = 'Error: Unable to analyze sentiment');
+      }
+    } catch (e) {
+      setState(() => _aiSuggestion = 'Error fetching suggestion: $e');
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  void _sendMessage() {
+    if (_messageController.text.trim().isEmpty) return;
+    setState(() {
+      _messages.add({
+        'text': _messageController.text.trim(),
+        'sentiment': _aiSuggestion,
+      });
+      _messageController.clear();
+      _aiSuggestion = '';
+    });
+  }
+
+  @override
+  void dispose() {
+    _messageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Messaging & Calls')),
+      body: Column(
+        children: [
+          Expanded(
+            child: _messages.isEmpty
+                ? const Center(child: Text('No messages yet'))
+                : ListView.builder(
+                    itemCount: _messages.length,
+                    itemBuilder: (context, index) {
+                      final message = _messages[index];
+                      return ListTile(
+                        title: Text(message['text']!),
+                        subtitle: message['sentiment']!.isNotEmpty
+                            ? Text('AI: ${message['sentiment']}')
+                            : null,
+                      );
+                    },
+                  ),
+          ),
+          if (_isLoading) const LinearProgressIndicator(),
+          if (_aiSuggestion.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text('AI Suggestion: $_aiSuggestion', style: const TextStyle(color: Colors.blue)),
+            ),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _messageController,
+                    decoration: const InputDecoration(labelText: 'Type a message'),
+                    onChanged: _getAISuggestion,
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.send),
+                  onPressed: _sendMessage,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class ProfileScreen extends StatelessWidget {
+  const ProfileScreen({super.key});
+
+  Future<void> _logout(BuildContext context) async {
+    try {
+      await Supabase.instance.client.auth.signOut();
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Logged out successfully')));
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Logout failed: $e')));
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Profile (Referral Points, Support, AI)')),
+      body: ListView(
+        children: [
+          const ListTile(
+            title: Text('Referral Points'),
+            subtitle: Text('You have 150 points'),
+            trailing: Icon(Icons.card_giftcard),
+          ),
+          ListTile(
+            title: const Text('Support'),
+            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SupportScreen())),
+          ),
+          ListTile(
+            title: const Text('AI Assistant'),
+            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AIAssistantScreen())),
+          ),
+          const LanguageSelectorWidget(),
+          const ContentReportWidget(),
+          ListTile(
+            title: const Text('Logout'),
+            trailing: const Icon(Icons.logout),
+            onTap: () => _logout(context),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class SupportScreen extends StatelessWidget {
+  const SupportScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Support')),
+      body: const Center(child: Text('Contact Support')),
+    );
+  }
+}
+
+class AIAssistantScreen extends StatelessWidget {
+  const AIAssistantScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('AI Assistant')),
+      body: const Center(child: Text('Ask me anything!')),
+    );
+  }
+}
+
+class LanguageSelectorWidget extends StatelessWidget {
+  const LanguageSelectorWidget({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      title: const Text('Language'),
+      subtitle: const Text('English'),
+      trailing: const Icon(Icons.language),
+      onTap: () {
+        // Implement language switching logic
+      },
+    );
+  }
+}
+
+class ContentReportWidget extends StatelessWidget {
+  const ContentReportWidget({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      title: const Text('Report Content'),
+      trailing: const Icon(Icons.report),
+      onTap: () {
+        // Implement content reporting logic
+      },
+    );
+  }
+}
+
+class WalletScreen extends StatelessWidget {
+  const WalletScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Wallet (Deposit, Withdraw, Ads)')),
+      body: ListView(
+        children: [
+          const ListTile(title: Text('Balance: \$50')),
+          ElevatedButton(
+            onPressed: () {},
+            child: const Text('Deposit'),
+          ),
+          ElevatedButton(
+            onPressed: () {},
+            child: const Text('Withdraw'),
+          ),
+          const SponsoredAdWidget(),
+        ],
+      ),
+    );
+  }
+}
