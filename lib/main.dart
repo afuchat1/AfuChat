@@ -10,10 +10,12 @@ void main() async {
     url: 'https://zcezlehzequzatfbnnhc.supabase.co',
     anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpjZXpsZWh6ZXF1emF0ZmJubmhjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg0NDAwMDMsImV4cCI6MjA2NDAxNjAwM30.8SitRl9rZAS6ADEryjXpsWMdR1kG5Y8v0bowo053rd4',
   );
-  runApp(AfuChatApp());
+  runApp(const AfuChatApp());
 }
 
 class AfuChatApp extends StatelessWidget {
+  const AfuChatApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
@@ -28,7 +30,7 @@ class AfuChatApp extends StatelessWidget {
         theme: ThemeData.light(),
         darkTheme: ThemeData.dark(),
         themeMode: ThemeMode.system,
-        home: AuthWrapper(),
+        home: const AuthWrapper(),
         debugShowCheckedModeBanner: false,
       ),
     );
@@ -36,40 +38,73 @@ class AfuChatApp extends StatelessWidget {
 }
 
 class AuthWrapper extends StatelessWidget {
+  const AuthWrapper({super.key});
+
   @override
   Widget build(BuildContext context) {
     final session = Provider.of<Session?>(context);
-    return session == null ? LoginScreen() : MainNavigation();
+    return session == null ? const LoginScreen() : const MainNavigation();
   }
 }
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
+
+  @override
+  _LoginScreenState createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  bool _isLoading = false;
 
   Future<void> _signInWithEmail(BuildContext context) async {
+    setState(() => _isLoading = true);
     try {
       await Supabase.instance.client.auth.signInWithPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Login Failed: $e')));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Login Failed: $e')));
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
   Future<void> _signInWithGoogle(BuildContext context) async {
+    setState(() => _isLoading = true);
     try {
       await Supabase.instance.client.auth.signInWithOAuth(
         OAuthProvider.google,
         redirectTo: 'https://zcezlehzequzatfbnnhc.supabase.co/auth/v1/callback',
       );
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Google Sign-In Failed: $e')));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Google Sign-In Failed: $e')));
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
   @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+ 
+
+@override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Padding(
@@ -79,22 +114,29 @@ class LoginScreen extends StatelessWidget {
           children: [
             TextField(
               controller: _emailController,
-              decoration: InputDecoration(labelText: 'Email'),
+              decoration: const InputDecoration(labelText: 'Email'),
+              keyboardType: TextInputType.emailAddress,
             ),
             TextField(
               controller: _passwordController,
-              decoration: InputDecoration(labelText: 'Password'),
+              decoration: const InputDecoration(labelText: 'Password'),
               obscureText: true,
             ),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () => _signInWithEmail(context),
-              child: Text('Login with Email'),
-            ),
-            ElevatedButton(
-              onPressed: () => _signInWithGoogle(context),
-              child: Text('Login with Google'),
-            ),
+            const SizedBox(height: 20),
+            _isLoading
+                ? const CircularProgressIndicator()
+                : Column(
+                    children: [
+                      ElevatedButton(
+                        onPressed: () => _signInWithEmail(context),
+                        child: const Text('Login with Email'),
+                      ),
+                      ElevatedButton(
+                        onPressed: () => _signInWithGoogle(context),
+                        child: const Text('Login with Google'),
+                      ),
+                    ],
+                  ),
           ],
         ),
       ),
@@ -103,6 +145,8 @@ class LoginScreen extends StatelessWidget {
 }
 
 class MainNavigation extends StatefulWidget {
+  const MainNavigation({super.key});
+
   @override
   _MainNavigationState createState() => _MainNavigationState();
 }
@@ -110,11 +154,11 @@ class MainNavigation extends StatefulWidget {
 class _MainNavigationState extends State<MainNavigation> {
   int _selectedIndex = 0;
   final List<Widget> _screens = [
-    FeedScreen(),
-    ChannelsScreen(),
-    MessagingScreen(),
-    ProfileScreen(),
-    WalletScreen(),
+    const FeedScreen(),
+    const ChannelsScreen(),
+    const MessagingScreen(),
+    const ProfileScreen(),
+    const WalletScreen(),
   ];
 
   void _onItemTapped(int index) => setState(() => _selectedIndex = index);
@@ -127,7 +171,7 @@ class _MainNavigationState extends State<MainNavigation> {
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
         type: BottomNavigationBarType.fixed,
-        items: [
+        items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Feed'),
           BottomNavigationBarItem(icon: Icon(Icons.tv), label: 'Channels'),
           BottomNavigationBarItem(icon: Icon(Icons.message), label: 'Messages'),
@@ -139,25 +183,71 @@ class _MainNavigationState extends State<MainNavigation> {
   }
 }
 
-class FeedScreen extends StatelessWidget {
+class FeedScreen extends StatefulWidget {
+  const FeedScreen({super.key});
+
+  @override
+  _FeedScreenState createState() => _FeedScreenState();
+}
+
+class _FeedScreenState extends State<FeedScreen> {
+  late Future<List<Map<String, dynamic>>> _postsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchPosts();
+  }
+
+  Future<void> _fetchPosts() async {
+    setState(() {
+      _postsFuture = Supabase.instance.client
+          .from('posts')
+          .select()
+          .then((response) => response as List<Map<String, dynamic>>)
+          .catchError((e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error fetching posts: $e')));
+        }
+        return [] as List<Map<String, dynamic>>;
+      });
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Feed (Sponsored Enabled)')),
+      appBar: AppBar(
+        title: const Text('Feed (Sponsored Enabled)'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _fetchPosts,
+          ),
+        ],
+      ),
       body: FutureBuilder<List<Map<String, dynamic>>>(
-        future: Supabase.instance.client
-            .from('posts')
-            .select()
-            .then((response) => response as List<Map<String, dynamic>>),
+        future: _postsFuture,
         builder: (context, snapshot) {
-          if (!snapshot.hasData) return Center(child: CircularProgressIndicator());
-          return ListView(
-            children: snapshot.data!.map((doc) {
-              return ListTile(
-                title: Text(doc['content']),
-                subtitle: doc['isSponsored'] ? Text('Sponsored') : null,
-              );
-            }).toList(),
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          }
+          if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(child: Text('No posts available'));
+          }
+          return RefreshIndicator(
+            onRefresh: _fetchPosts,
+            child: ListView(
+              children: snapshot.data!.map((doc) {
+                return ListTile(
+                  title: Text(doc['content']),
+                  subtitle: doc['isSponsored'] ? const Text('Sponsored') : null,
+                );
+              }).toList(),
+            ),
           );
         },
       ),
@@ -166,12 +256,14 @@ class FeedScreen extends StatelessWidget {
 }
 
 class ChannelsScreen extends StatelessWidget {
+  const ChannelsScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Channels (With Sponsored)')),
+      appBar: AppBar(title: const Text('Channels (With Sponsored)')),
       body: ListView(
-        children: [
+        children: const [
           ListTile(title: Text('Channel 1'), subtitle: Text('Description')),
           SponsoredAdWidget(),
           ListTile(title: Text('Channel 2'), subtitle: Text('Description')),
@@ -182,184 +274,15 @@ class ChannelsScreen extends StatelessWidget {
 }
 
 class SponsoredAdWidget extends StatelessWidget {
+  const SponsoredAdWidget({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Container(
       color: Colors.grey[200],
-      padding: EdgeInsets.all(8.0),
-      child: Row(
+      padding: const EdgeInsets.all(8.0),
+      child: const Row(
         children: [
           Icon(Icons.star, color: Colors.yellow),
           SizedBox(width: 8),
-          Text('Sponsored: Check out this cool product!'),
-        ],
-      ),
-    );
-  }
-}
-
-class MessagingScreen extends StatefulWidget {
-  @override
-  _MessagingScreenState createState() => _MessagingScreenState();
-}
-
-class _MessagingScreenState extends State<MessagingScreen> {
-  final TextEditingController _messageController = TextEditingController();
-  String _aiSuggestion = '';
-
-  Future<void> _getAISuggestion(String input) async {
-    if (input.isEmpty) {
-      setState(() => _aiSuggestion = '');
-      return;
-    }
-    try {
-      final response = await http.post(
-        Uri.parse('https://api-inference.huggingface.co/models/distilbert-base-uncased-finetuned-sst-2-english'),
-        headers: {
-          'Authorization': 'Bearer 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',
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({'inputs': input}),
-      );
-      if (response.statusCode == 200) {
-        final result = jsonDecode(response.body);
-        setState(() => _aiSuggestion = result[0]['label'] == 'POSITIVE' ? 'Sounds positive!' : 'Sounds negative.');
-      }
-    } catch (e) {
-      setState(() => _aiSuggestion = 'Error fetching suggestion');
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Messaging & Calls')),
-      body: Column(
-        children: [
-          Expanded(child: Center(child: Text('Chat List Here'))),
-          if (_aiSuggestion.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text('AI Suggestion: $_aiSuggestion', style: TextStyle(color: Colors.blue)),
-            ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _messageController,
-                    decoration: InputDecoration(labelText: 'Type a message'),
-                    onChanged: _getAISuggestion,
-                  ),
-                ),
-                IconButton(
-                  icon: Icon(Icons.send),
-                  onPressed: () {},
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class ProfileScreen extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Profile (Referral Points, Support, AI)')),
-      body: ListView(
-        children: [
-          ListTile(
-            title: Text('Referral Points'),
-            subtitle: Text('You have 150 points'),
-            trailing: Icon(Icons.card_giftcard),
-          ),
-          ListTile(
-            title: Text('Support'),
-            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => SupportScreen())),
-          ),
-          ListTile(
-            title: Text('AI Assistant'),
-            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => AIAssistantScreen())),
-          ),
-          LanguageSelectorWidget(),
-          ContentReportWidget(),
-        ],
-      ),
-    );
-  }
-}
-
-class SupportScreen extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Support')),
-      body: Center(child: Text('Contact Support')),
-    );
-  }
-}
-
-class AIAssistantScreen extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('AI Assistant')),
-      body: Center(child: Text('Ask me anything!')),
-    );
-  }
-}
-
-class LanguageSelectorWidget extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      title: Text('Language'),
-      subtitle: Text('English'),
-      trailing: Icon(Icons.language),
-      onTap: () {
-        // Implement language switching logic
-      },
-    );
-  }
-}
-
-class ContentReportWidget extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      title: Text('Report Content'),
-      trailing: Icon(Icons.report),
-      onTap: () {
-        // Implement content reporting logic
-      },
-    );
-  }
-}
-
-class WalletScreen extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Wallet (Deposit, Withdraw, Ads)')),
-      body: ListView(
-        children: [
-          ListTile(title: Text('Balance: \$50')),
-          ElevatedButton(
-            onPressed: () {},
-            child: Text('Deposit'),
-          ),
-          ElevatedButton(
-            onPressed: () {},
-            child: Text('Withdraw'),
-          ),
-          SponsoredAdWidget(),
-        ],
-      ),
-    );
-  }
-}
+          Text('Sponsored: Check out this cool product
