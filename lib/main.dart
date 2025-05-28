@@ -95,11 +95,6 @@ class LoginScreen extends StatelessWidget {
               onPressed: () => _signInWithGoogle(context),
               child: Text('Login with Google'),
             ),
-            SizedBox(height: 20),
-            Text(
-              'Current Time: 05:23 PM EAT, May 28, 2025',
-              style: TextStyle(fontSize: 12, color: Colors.grey),
-            ),
           ],
         ),
       ),
@@ -221,7 +216,7 @@ class _MessagingScreenState extends State<MessagingScreen> {
       final response = await http.post(
         Uri.parse('https://api-inference.huggingface.co/models/distilbert-base-uncased-finetuned-sst-2-english'),
         headers: {
-          'Authorization': 'Bearer hf_ActualToken123', // Replace with your actual Hugging Face API Key
+          'Authorization': 'Bearer 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',
           'Content-Type': 'application/json',
         },
         body: jsonEncode({'inputs': input}),
