@@ -1,23 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:google_sign_in/google_sign_in.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: const FirebaseOptions(
-      apiKey: "YOUR_API_KEY", // Replace with your Firebase config
-      authDomain: "YOUR_AUTH_DOMAIN",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_STORAGE_BUCKET",
-      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-      appId: "YOUR_APP_ID",
-    ),
+  await Supabase.initialize(
+    url: 'YOUR_SUPABASE_URL', // Replace with your Supabase URL
+    anonKey: 'YOUR_SUPABASE_ANON_KEY', // Replace with your Supabase anon key
   );
   runApp(AfuChatApp());
 }
@@ -27,9 +18,9 @@ class AfuChatApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        StreamProvider<User?>.value(
-          value: FirebaseAuth.instance.authStateChanges(),
-          initialData: null,
+        StreamProvider<Session?>.value(
+          value: Supabase.instance.client.auth.onAuthStateChange.map((state) => state.session),
+          initialData: Supabase.instance.client.auth.currentSession,
         ),
       ],
       child: MaterialApp(
@@ -47,8 +38,8 @@ class AfuChatApp extends StatelessWidget {
 class AuthWrapper extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final user = Provider.of<User?>(context);
-    return user == null ? LoginScreen() : MainNavigation();
+    final session = Provider.of<Session?>(context);
+    return session == null ? LoginScreen() : MainNavigation();
   }
 }
 
@@ -58,7 +49,7 @@ class LoginScreen extends StatelessWidget {
 
   Future<void> _signInWithEmail(BuildContext context) async {
     try {
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
+      await Supabase.instance.client.auth.signInWithPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
@@ -69,13 +60,10 @@ class LoginScreen extends StatelessWidget {
 
   Future<void> _signInWithGoogle(BuildContext context) async {
     try {
-      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
-      final GoogleSignInAuthentication googleAuth = await googleUser!.authentication;
-      final credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
+      await Supabase.instance.client.auth.signInWithOAuth(
+        OAuthProvider.google,
+        redirectTo: 'io.supabase.flutterquickstart://login-callback/',
       );
-      await FirebaseAuth.instance.signInWithCredential(credential);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Google Sign-In Failed: $e')));
     }
@@ -156,12 +144,15 @@ class FeedScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text('Feed (Sponsored Enabled)')),
-      body: StreamBuilder(
-        stream: FirebaseFirestore.instance.collection('posts').snapshots(),
-        builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
+      body: FutureBuilder<List<Map<String, dynamic>>>(
+        future: Supabase.instance.client
+            .from('posts')
+            .select()
+            .then((response) => response as List<Map<String, dynamic>>),
+        builder: (context, snapshot) {
           if (!snapshot.hasData) return Center(child: CircularProgressIndicator());
           return ListView(
-            children: snapshot.data!.docs.map((doc) {
+            children: snapshot.data!.map((doc) {
               return ListTile(
                 title: Text(doc['content']),
                 subtitle: doc['isSponsored'] ? Text('Sponsored') : null,
@@ -286,79 +277,3 @@ class ProfileScreen extends StatelessWidget {
             title: Text('Referral Points'),
             subtitle: Text('You have 150 points'),
             trailing: Icon(Icons.card_giftcard),
-          ),
-          ListTile(
-            title: Text('Support'),
-            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => SupportScreen())),
-          ),
-          ListTile(
-            title: Text('AI Assistant'),
-            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => AIAssistantScreen())),
-          ),
-          LanguageSelectorWidget(),
-          ContentReportWidget(),
-        ],
-      ),
-    );
-  }
-}
-
-class SupportScreen extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) => Scaffold(appBar: AppBar(title: Text('Support')), body: Center(child: Text('Contact Support')));
-}
-
-class AIAssistantScreen extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) => Scaffold(appBar: AppBar(title: Text('AI Assistant')), body: Center(child: Text('Ask me anything!')));
-}
-
-class LanguageSelectorWidget extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      title: Text('Language'),
-      subtitle: Text('English'),
-      trailing: Icon(Icons.language),
-      onTap: () {
-        // Implement language switching logic
-      },
-    );
-  }
-}
-
-class ContentReportWidget extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      title: Text('Report Content'),
-      trailing: Icon(Icons.report),
-      onTap: () {
-        // Implement content reporting logic
-      },
-    );
-  }
-}
-
-class WalletScreen extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Wallet (Deposit, Withdraw, Ads)')),
-      body: ListView(
-        children: [
-          ListTile(title: Text('Balance: \$50')),
-          ElevatedButton(
-            onPressed: () {},
-            child: Text('Deposit'),
-          ),
-          ElevatedButton(
-            onPressed: () {},
-            child: Text('Withdraw'),
-          ),
-          SponsoredAdWidget(),
-        ],
-      ),
-    );
-  }
-}
