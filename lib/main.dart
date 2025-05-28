@@ -7,8 +7,8 @@ import 'dart:convert';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Supabase.initialize(
-    url: 'YOUR_SUPABASE_URL', // Replace with your Supabase URL
-    anonKey: 'YOUR_SUPABASE_ANON_KEY', // Replace with your Supabase anon key
+    url: 'https://zcezlehzequzatfbnnhc.supabase.co',
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpjZXpsZWh6ZXF1emF0ZmJubmhjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg0NDAwMDMsImV4cCI6MjA2NDAxNjAwM30.8SitRl9rZAS6ADEryjXpsWMdR1kG5Y8v0bowo053rd4',
   );
   runApp(AfuChatApp());
 }
@@ -62,7 +62,7 @@ class LoginScreen extends StatelessWidget {
     try {
       await Supabase.instance.client.auth.signInWithOAuth(
         OAuthProvider.google,
-        redirectTo: 'https://yourprojectid.supabase.co/auth/v1/callback', // Replace with your Supabase callback URL
+        redirectTo: 'https://zcezlehzequzatfbnnhc.supabase.co/auth/v1/callback',
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Google Sign-In Failed: $e')));
@@ -94,6 +94,11 @@ class LoginScreen extends StatelessWidget {
             ElevatedButton(
               onPressed: () => _signInWithGoogle(context),
               child: Text('Login with Google'),
+            ),
+            SizedBox(height: 20),
+            Text(
+              'Current Time: 05:23 PM EAT, May 28, 2025',
+              style: TextStyle(fontSize: 12, color: Colors.grey),
             ),
           ],
         ),
@@ -216,7 +221,7 @@ class _MessagingScreenState extends State<MessagingScreen> {
       final response = await http.post(
         Uri.parse('https://api-inference.huggingface.co/models/distilbert-base-uncased-finetuned-sst-2-english'),
         headers: {
-          'Authorization': 'Bearer YOUR_HF_API_KEY', // Replace with your Hugging Face API key
+          'Authorization': 'Bearer hf_ActualToken123', // Replace with your actual Hugging Face API Key
           'Content-Type': 'application/json',
         },
         body: jsonEncode({'inputs': input}),
