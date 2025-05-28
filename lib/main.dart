@@ -62,7 +62,7 @@ class LoginScreen extends StatelessWidget {
     try {
       await Supabase.instance.client.auth.signInWithOAuth(
         OAuthProvider.google,
-        redirectTo: 'io.supabase.flutterquickstart://login-callback/',
+        redirectTo: 'https://yourprojectid.supabase.co/auth/v1/callback', // Replace with your Supabase callback URL
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Google Sign-In Failed: $e')));
@@ -277,3 +277,89 @@ class ProfileScreen extends StatelessWidget {
             title: Text('Referral Points'),
             subtitle: Text('You have 150 points'),
             trailing: Icon(Icons.card_giftcard),
+          ),
+          ListTile(
+            title: Text('Support'),
+            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => SupportScreen())),
+          ),
+          ListTile(
+            title: Text('AI Assistant'),
+            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => AIAssistantScreen())),
+          ),
+          LanguageSelectorWidget(),
+          ContentReportWidget(),
+        ],
+      ),
+    );
+  }
+}
+
+class SupportScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Support')),
+      body: Center(child: Text('Contact Support')),
+    );
+  }
+}
+
+class AIAssistantScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('AI Assistant')),
+      body: Center(child: Text('Ask me anything!')),
+    );
+  }
+}
+
+class LanguageSelectorWidget extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      title: Text('Language'),
+      subtitle: Text('English'),
+      trailing: Icon(Icons.language),
+      onTap: () {
+        // Implement language switching logic
+      },
+    );
+  }
+}
+
+class ContentReportWidget extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      title: Text('Report Content'),
+      trailing: Icon(Icons.report),
+      onTap: () {
+        // Implement content reporting logic
+      },
+    );
+  }
+}
+
+class WalletScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Wallet (Deposit, Withdraw, Ads)')),
+      body: ListView(
+        children: [
+          ListTile(title: Text('Balance: \$50')),
+          ElevatedButton(
+            onPressed: () {},
+            child: Text('Deposit'),
+          ),
+          ElevatedButton(
+            onPressed: () {},
+            child: Text('Withdraw'),
+          ),
+          SponsoredAdWidget(),
+        ],
+      ),
+    );
+  }
+}
